@@ -17,17 +17,17 @@ type Logit struct {
 var LogInstance *Logit
 var nonce *sync.Once = &sync.Once{}
 
-func (logit *Logit) Access() *zap.SugaredLogger {
-	if logit == nil {
+func Access() *zap.SugaredLogger {
+	if LogInstance == nil {
 		nonce.Do(func() {
 			logger, _ := zap.NewProduction()
-			logit = &Logit{logger: logger.Sugar(), sigs: make(chan os.Signal, 1)}
-			logit.logger.Info("Starting up logging")
-			signal.Notify(logit.sigs, syscall.SIGINT, syscall.SIGTERM)
-			go logit.runCleanup()
+			LogInstance = &Logit{logger: logger.Sugar(), sigs: make(chan os.Signal, 1)}
+			LogInstance.logger.Info("Starting up logging")
+			signal.Notify(LogInstance.sigs, syscall.SIGINT, syscall.SIGTERM)
+			go LogInstance.runCleanup()
 		})
 	}
-	return logit.logger
+	return LogInstance.logger
 }
 
 func (logit *Logit) Info(template string, vars ...interface{}) {
