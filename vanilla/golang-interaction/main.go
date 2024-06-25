@@ -1,8 +1,8 @@
 package main
 
 import (
-	connectionmanager "kafkaing/connection_manager"
 	"kafkaing/logging"
+	connectionmanager "kafkaing/management"
 	"time"
 
 	"go.uber.org/zap"

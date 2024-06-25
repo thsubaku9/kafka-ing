@@ -1,4 +1,4 @@
-package connectionmanager
+package management
 
 import (
 	"context"

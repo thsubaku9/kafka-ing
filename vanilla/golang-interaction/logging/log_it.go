@@ -13,7 +13,7 @@ var nonce *sync.Once = &sync.Once{}
 
 func Initialize() {
 	nonce.Do(func() {
-		zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
+		zap.ReplaceGlobals(zap.Must(zap.NewDevelopment()))
 		zap.L().Sugar().Info("Starting up logging")
 
 		exitChannel := make(chan os.Signal, 1)
