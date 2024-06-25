@@ -2,12 +2,10 @@ package connectionmanager
 
 import (
 	"context"
-	"kafkaing/logging"
 
 	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
 )
-
-//https://github.com/segmentio/kafka-go
 
 type ConnectionManager struct {
 	topic        string
@@ -26,7 +24,7 @@ func (cm *ConnectionManager) EstablishConnection(network, address string, consum
 	var err error
 	cm.conn, err = kafka.DialLeader(cm.ctx, network, address, cm.topic, cm.partition)
 	if err != nil {
-		logging.LogInstance.Error("failed to establish connection %s", err)
+		zap.L().Sugar().Error("failed to establish connection %s", err)
 		return nil
 	}
 
@@ -48,9 +46,9 @@ func (cm *ConnectionManager) runBackgroundProducer() {
 		msg := kafka.Message{Topic: cm.topic, Partition: cm.partition, Value: byteArr}
 		_, err := cm.conn.WriteMessages(msg)
 		if err != nil {
-			logging.LogInstance.Error("failed to send msg %s", err)
+			zap.L().Sugar().Error("failed to send msg %s", err)
 		} else {
-			logging.LogInstance.Info("sucessfully sent msg to %s %s", msg.Topic, string(rune(msg.Partition)))
+			zap.L().Sugar().Info("sucessfully sent msg to %s %s", msg.Topic, string(rune(msg.Partition)))
 		}
 	}
 
@@ -61,7 +59,7 @@ func (cm *ConnectionManager) runBackgroundConsumer(consumerFn func([]byte)) {
 	for {
 		_, err := cm.conn.Read(b)
 		if err != nil {
-			logging.LogInstance.Error("failed to consume msg %s", err)
+			zap.L().Sugar().Error("failed to consume msg %s", err)
 			continue
 		}
 		consumerFn(b)
@@ -71,5 +69,5 @@ func (cm *ConnectionManager) runBackgroundConsumer(consumerFn func([]byte)) {
 
 func (cm *ConnectionManager) ShutdownHook() {
 	cm.conn.Close()
-	logging.LogInstance.Info("Kafka Connection Manager shutdowned")
+	zap.L().Sugar().Info("Kafka Connection Manager shutdowned")
 }
