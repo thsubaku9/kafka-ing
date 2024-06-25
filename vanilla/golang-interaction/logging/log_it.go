@@ -1,10 +1,8 @@
 package logging
 
 import (
-	"os"
-	"os/signal"
+	"kafkaing/utils"
 	"sync"
-	"syscall"
 
 	"go.uber.org/zap"
 )
@@ -16,14 +14,9 @@ func Initialize() {
 		zap.ReplaceGlobals(zap.Must(zap.NewDevelopment()))
 		zap.L().Sugar().Info("Starting up logging")
 
-		exitChannel := make(chan os.Signal, 1)
-		signal.Notify(exitChannel, syscall.SIGINT, syscall.SIGTERM)
-		go runCleanup(exitChannel)
+		go utils.RunCleanup(utils.PrepareSigtermChannel(), func() {
+			zap.L().Sugar().Info("Shutting down logging")
+			zap.L().Sugar().Sync()
+		})
 	})
-}
-
-func runCleanup(exitChannel <-chan os.Signal) {
-	<-exitChannel
-	zap.L().Sugar().Info("Shutting down logging")
-	zap.L().Sugar().Sync()
 }
