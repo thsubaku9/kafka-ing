@@ -2,7 +2,7 @@ package main
 
 import (
 	"kafkaing/logging"
-	connectionmanager "kafkaing/management"
+	"kafkaing/management"
 	"time"
 
 	"go.uber.org/zap"
@@ -17,7 +17,7 @@ func printBytes(b []byte) {
 }
 
 func main() {
-	cm := connectionmanager.GenerateNewCm("mcswirl", 0)
+	cm := management.GenerateNewCm("mcswirl", 0)
 	producerChannel := cm.EstablishConnection("tcp", "localhost:9092", printBytes)
 
 	producerChannel <- []byte("mario")
@@ -27,3 +27,7 @@ func main() {
 
 	cm.ShutdownHook()
 }
+
+// func main() {
+// 	management.TestConnection()
+// }
