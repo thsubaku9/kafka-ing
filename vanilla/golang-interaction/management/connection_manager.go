@@ -29,7 +29,7 @@ func (cm *ConnectionManager) EstablishConnection(network, address string, consum
 	}
 
 	cm.producerChan = make(chan []byte)
-	go cm.runBackgroundProducer()
+	go cm.runBackgroundProducer(address)
 
 	if consumerFn != nil {
 		go cm.runBackgroundConsumer(address, cm.groupId, consumerFn)
@@ -38,11 +38,18 @@ func (cm *ConnectionManager) EstablishConnection(network, address string, consum
 	return cm.producerChan
 }
 
-func (cm *ConnectionManager) runBackgroundProducer() {
+func (cm *ConnectionManager) runBackgroundProducer(address string) {
+
+	writer := &kafka.Writer{
+		Addr:     kafka.TCP(address),
+		Balancer: &kafka.Hash{},
+	}
+
 	for {
 		byteArr := <-cm.producerChan
 		msg := kafka.Message{Topic: cm.topic, Partition: cm.partition, Value: byteArr}
-		_, err := cm.conn.WriteMessages(msg)
+
+		err := writer.WriteMessages(cm.ctx, msg)
 		if err != nil {
 			zap.L().Sugar().Errorf("failed to send msg %s", err)
 		} else {
