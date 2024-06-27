@@ -101,13 +101,6 @@ func (avm *SqliteAvroManager) UpdateSchema(name, version, schema string) bool {
 func (avm *SqliteAvroManager) UpsertSchema(name, version, schema string) bool {
 	avm.sema.Acquire(avm.context, 1)
 	defer avm.sema.Release(1)
-	{
-		_, err := avm.conn.Exec(SchemaUpsertQuery, name, version, schema)
-		if err != nil {
-			zap.L().Sugar().Error(err)
-			return false
-		}
-	}
 
 	{
 		avroSchema := avm.decodeSchema(schema)
@@ -115,6 +108,14 @@ func (avm *SqliteAvroManager) UpsertSchema(name, version, schema string) bool {
 			return false
 		}
 		avm.updateSchemaCache(name, version, avroSchema)
+	}
+
+	{
+		_, err := avm.conn.Exec(SchemaUpsertQuery, name, version, schema)
+		if err != nil {
+			zap.L().Sugar().Error(err)
+			return false
+		}
 	}
 
 	return true
