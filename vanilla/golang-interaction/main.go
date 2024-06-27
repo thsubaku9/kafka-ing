@@ -5,6 +5,8 @@ import (
 	"kafkaing/management"
 	"time"
 
+	"github.com/segmentio/kafka-go"
+
 	"go.uber.org/zap"
 )
 
@@ -12,18 +14,18 @@ func init() {
 	logging.Initialize()
 }
 
-func printBytes(b []byte) {
-	zap.L().Sugar().Debug("Read : %s\n", string(b))
+func printBytes(m kafka.Message) {
+	zap.L().Sugar().Debugf("Read : %s\n", string(m.Value))
 }
 
 func main() {
-	cm := management.GenerateNewCm("mcswirl", 0)
+	cm := management.GenerateNewCm("mcswirl", 0, "gid1")
 	producerChannel := cm.EstablishConnection("tcp", "localhost:9092", printBytes)
 
 	producerChannel <- []byte("mario")
 	producerChannel <- []byte("luigi")
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	cm.ShutdownHook()
 }
@@ -46,3 +48,10 @@ func main() {
 // 	fmt.Println(res.String())
 // 	fmt.Println(res.Type())
 // }
+
+/*
+type SimpleRecord struct {
+	A int64  `avro:"a"`
+	B string `avro:"b"`
+}
+*/
