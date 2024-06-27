@@ -13,14 +13,14 @@ type ConnectionManager struct {
 	groupId      string
 	ctx          context.Context
 	conn         *kafka.Conn
-	producerChan chan []byte
+	producerChan chan kafka.Message
 }
 
 func GenerateNewCm(topic string, partition int, groupId string) *ConnectionManager {
 	return &ConnectionManager{topic: topic, partition: partition, groupId: groupId, ctx: context.Background()}
 }
 
-func (cm *ConnectionManager) EstablishConnection(network, address string, consumerFn func(kafka.Message)) chan<- []byte {
+func (cm *ConnectionManager) EstablishConnection(network, address string, consumerFn func(kafka.Message)) chan<- kafka.Message {
 	var err error
 	cm.conn, err = kafka.DialLeader(cm.ctx, network, address, cm.topic, cm.partition)
 	if err != nil {
@@ -28,7 +28,7 @@ func (cm *ConnectionManager) EstablishConnection(network, address string, consum
 		return nil
 	}
 
-	cm.producerChan = make(chan []byte)
+	cm.producerChan = make(chan kafka.Message)
 	go cm.runBackgroundProducer(address)
 
 	if consumerFn != nil {
@@ -46,8 +46,8 @@ func (cm *ConnectionManager) runBackgroundProducer(address string) {
 	}
 
 	for {
-		byteArr := <-cm.producerChan
-		msg := kafka.Message{Topic: cm.topic, Partition: cm.partition, Value: byteArr}
+		channelMsg := <-cm.producerChan
+		msg := kafka.Message{Topic: cm.topic, Partition: cm.partition, Key: channelMsg.Key, Value: channelMsg.Value}
 
 		err := writer.WriteMessages(cm.ctx, msg)
 		if err != nil {
