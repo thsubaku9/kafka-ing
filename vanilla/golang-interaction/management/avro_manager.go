@@ -18,6 +18,7 @@ type AvroManager interface {
 	CreateSchema(name, version, schema string) bool
 	UpdateSchema(name, version, schema string) bool
 	DeleteSchema(name, version string) bool
+	UpsertSchema(name, version, schema string) bool
 	GetSchema(name, version string) avro.Schema
 }
 
@@ -62,7 +63,7 @@ func (avm *SqliteAvroManager) CreateSchema(name, version, schema string) bool {
 	}
 
 	{
-		res, err := avm.conn.Exec(SchemaInsertQuery, name, schema, version)
+		res, err := avm.conn.Exec(SchemaInsertQuery, name, version, schema)
 		if err != nil {
 			zap.L().Sugar().Error(err)
 			return false
@@ -95,6 +96,28 @@ func (avm *SqliteAvroManager) UpdateSchema(name, version, schema string) bool {
 	}
 
 	return false
+}
+
+func (avm *SqliteAvroManager) UpsertSchema(name, version, schema string) bool {
+	avm.sema.Acquire(avm.context, 1)
+	defer avm.sema.Release(1)
+	{
+		_, err := avm.conn.Exec(SchemaUpsertQuery, name, version, schema)
+		if err != nil {
+			zap.L().Sugar().Error(err)
+			return false
+		}
+	}
+
+	{
+		avroSchema := avm.decodeSchema(schema)
+		if avroSchema == nil {
+			return false
+		}
+		avm.updateSchemaCache(name, version, avroSchema)
+	}
+
+	return true
 }
 
 func (avm *SqliteAvroManager) DeleteSchema(name, version string) bool {
