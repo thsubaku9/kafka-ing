@@ -17,3 +17,4 @@ const SchemaDeleteQuery string = `DELETE * FROM avro_store WHERE name = ? AND ve
 const SchemaBulkDeleteQuery string = `DELETE * FROM avro_store WHERE name = ?`
 const SchemaInsertQuery string = `INSERT INTO avro_store(name, version, schema) VALUES(?,?,?)`
 const SchemaUpdateQuery string = `UPDATE avro_store SET schema = ? WHERE name = ? AND version = ?`
+const SchemaUpsertQuery string = `INSERT INTO avro_store(name, version, schema) VALUES(?,?,?) ON CONFLICT(name, version) DO UPDATE SET schema = excluded.schema`

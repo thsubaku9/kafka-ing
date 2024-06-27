@@ -20,6 +20,7 @@ func printBytes(m kafka.Message) {
 
 func main() {
 	cm := management.GenerateNewCm("mcswirl", 0, "gid1")
+	var avroManager management.AvroManager = management.InitAvroManager("sqlite3", "./schemaRegistry.db")
 	producerChannel := cm.EstablishConnection("tcp", "localhost:9092", printBytes)
 
 	producerChannel <- []byte("mario")
